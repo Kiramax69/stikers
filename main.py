@@ -22,19 +22,31 @@ async def process_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
         temp_out_path = tempfile.NamedTemporaryFile(suffix=".webm").name
 
         try:
+            # Уведомляем пользователя о начале обработки
+            status_message = await update.message.reply_text("Файл получен. Начинаю конвертацию...")
+
             # Скачиваем видео/GIF во временный файл
             await file.download_to_drive(temp_in_path)
 
+            # Обновляем статус
+            await status_message.edit_text("Конвертирую видео в WEBM...")
+
             # Конвертируем видео в WEBM
             convert_to_webm(temp_in_path, temp_out_path, MAX_FILE_SIZE)
+
+            # Обновляем статус перед отправкой
+            await status_message.edit_text("Конвертация завершена. Отправляю файл...")
 
             # Отправляем конвертированный файл пользователю
             with open(temp_out_path, 'rb') as webm_file:
                 await update.message.reply_document(document=webm_file, filename="output.webm")
 
+            # Уведомляем об успешной отправке
+            await status_message.edit_text("Файл успешно отправлен!")
+
         except Exception as e:
-            # Обработка ошибок
-            await update.message.reply_text(f"Произошла ошибка при обработке файла: {e}")
+            # Обработка ошибок с уведомлением
+            await status_message.edit_text(f"Произошла ошибка при обработке файла: {e}")
 
         finally:
             # Очистка временных файлов
